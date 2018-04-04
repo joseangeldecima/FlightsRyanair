@@ -1,0 +1,11 @@
+com\ryanair\Flight.class
+com\ryanair\component\IInterconnectionsService.class
+com\ryanair\InterconnectionsController.class
+com\ryanair\Legs.class
+com\ryanair\config\AppConfig.class
+com\ryanair\Schedule.class
+com\ryanair\component\InterconnectionsService.class
+com\ryanair\Route.class
+com\ryanair\config\WebAppInitializer.class
+com\ryanair\Days.class
+com\ryanair\Interconnections.class
