@@ -6,9 +6,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -99,8 +101,9 @@ public class InterconnectionsServiceImpl implements IInterconnectionsService {
 						departureDateTime.getMonthValue());
 				r.setSchedule(schedule);
 			} catch (RestClientException e) {
-				Logger.getGlobal().log(Level.WARNING, () -> String.format("%s. Could not retrieve flight from :%s to:%s",
-						e.getMessage(), r.getAirportFrom(), r.getAirportTo()));
+				Logger.getGlobal().log(Level.WARNING,
+						() -> String.format("%s. Could not retrieve flight from :%s to:%s", e.getMessage(),
+								r.getAirportFrom(), r.getAirportTo()));
 			}
 		}
 
@@ -240,21 +243,21 @@ public class InterconnectionsServiceImpl implements IInterconnectionsService {
 	 * @param arrivalFrom
 	 */
 	private void findArrivalAirport(Route routeFrom, LocalDateTime departFrom, LocalDateTime arrivalFrom) {
-		for (Route routeTo : toAirports) { // for each route whom reach final destiny
-			// arrival of first, departure of second
-			if (routeFrom.getAirportTo().equals(routeTo.getAirportFrom()) && null != routeTo.getSchedule()
-					&& null != routeTo.getSchedule().getDays()) {
-				for (Days dayTo : routeTo.getSchedule().getDays()) { // for each day of the month
-					for (Flight flightTo : dayTo.getFlights()) { // for each flight of the day
-						// getting the date/hour of the flights
-						LocalDateTime departTo = createDate(departureDateTime, dayTo.getDay(),
-								routeTo.getSchedule().getMonth(), flightTo.getDepartureTime());
-						LocalDateTime arrivalTo = createDate(arrivalDateTime, dayTo.getDay(),
-								routeTo.getSchedule().getMonth(), flightTo.getArrivalTime());
+		// convert set to map
+		Map<String, Route> mapFromSet = toAirports.stream().collect(Collectors.toMap(Route::getAirportFrom, r -> r));
 
-						addInterconnectedFlightsToResponse(routeFrom, departFrom, arrivalFrom, routeTo, departTo,
-								arrivalTo);
-					}
+		Route routeTo = mapFromSet.get(routeFrom.getAirportTo()); // get the interconnected flight
+		if (null != routeTo && null != routeTo.getSchedule() && null != routeTo.getSchedule().getDays()) {
+			for (Days dayTo : routeTo.getSchedule().getDays()) { // for each day of the month
+				for (Flight flightTo : dayTo.getFlights()) { // for each flight of the day
+					// getting the date/hour of the flights
+					LocalDateTime departTo = createDate(departureDateTime, dayTo.getDay(),
+							routeTo.getSchedule().getMonth(), flightTo.getDepartureTime());
+					LocalDateTime arrivalTo = createDate(arrivalDateTime, dayTo.getDay(),
+							routeTo.getSchedule().getMonth(), flightTo.getArrivalTime());
+
+					addInterconnectedFlightsToResponse(routeFrom, departFrom, arrivalFrom, routeTo, departTo,
+							arrivalTo);
 				}
 			}
 		}
